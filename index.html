@@ -218,7 +218,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2020-03-07 01:53:35 / 修改时间：01:58:28" itemprop="dateCreated datePublished" datetime="2020-03-07T01:53:35+08:00">2020-03-07</time>
+              <time title="创建时间：2020-03-07 01:53:35 / 修改时间：02:01:36" itemprop="dateCreated datePublished" datetime="2020-03-07T01:53:35+08:00">2020-03-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -246,102 +246,14 @@
           <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>当你发现在iPad，Android手机上并没有一个好的IDE去完成你的代码，而你又想实现随时随地写代码的需求（奇怪的需求），那么你可以试试Code-Server——一个部署在Linux服务器上面的类似于VSCode的编辑器，随时随地，只需拥有<strong>一个Web浏览器</strong>，就可以进行代码的<strong>编辑、执行和调试</strong>。</p>
 <p>本文章则将教授如何在Cent OS下进行Code-Server的部署，并简单的加入三个插件实现C++和Python的编辑执行和调试。</p>
 <h2 id="租用一个CentOS服务器"><a href="#租用一个CentOS服务器" class="headerlink" title="租用一个CentOS服务器"></a>租用一个CentOS服务器</h2><p>这里笔者选用的是阿里云的ECS，在武汉肺炎疫情期间，学生只要通过一个简单的认证和答对几道服务器相关的题目（百度就能找到答案）即可获得一个六个月的服务器【<a href="https://developer.aliyun.com/adc/student/" target="_blank" rel="noopener">🔗链接</a>】。如果错过了，以后，凭借大学生的身份，你也可以以10元/月的价格获得服务器（该价格也适用于腾讯云）。你可以对该服务器进行任意配置和系统的更换，这里笔者选择了CentOS 7.3。<strong>理论上，该份引导说明适用于所有的CentOS 7.x的服务器。</strong></p>
-<h2 id="通过SSH链接到服务器并进行配置"><a href="#通过SSH链接到服务器并进行配置" class="headerlink" title="通过SSH链接到服务器并进行配置"></a>通过SSH链接到服务器并进行配置</h2><ol>
-<li><p>在阿里云的界面中进入<strong>控制台</strong>，在左侧栏找到ECS，“实例”中就有你刚才获得的服务器（切换左上角的地区到你领取的服务器所在的位置才能看到）。进入后在左边基本信息栏找到更多，更改密码到你想要的密码，即可点击“<strong>远程连接</strong>”。</p>
-</li>
-<li><p>进入后，请按照下图的说明进行填写——</p>
-<p><img src="https://i.loli.net/2020/03/07/x7prbFV5C9PASvt.jpg" alt="服务器登陆.jpg"></p>
-</li>
-<li><p>进入后，界面大致如图，这下面黑乎乎的一块叫做<strong>终端</strong>：</p>
-<p><img src="https://i.loli.net/2020/03/07/Rsz5Ylc4pJVj3PU.png" alt="QQ图片20200307001014.png"></p>
-</li>
-<li><p>在这里就可以进行操作了。</p>
-</li>
-</ol>
-<h2 id="进行Screen的安装和使用"><a href="#进行Screen的安装和使用" class="headerlink" title="进行Screen的安装和使用"></a>进行Screen的安装和使用</h2><ol>
-<li>这里安装Screen的原因是，code-server本身是在SSH链接失效时会自动断开的，但是Screen可以建立如Windows多任务的效果进行切换并且不会因为SSH断开而导致code-server自动退出</li>
-<li>也不会在部署的时候因为意外断开SSH连接导致需要之前的任务重做</li>
-<li>而且还能进行更多任务处理并更为方便的管理，比如笔者的服务器就同时作为Code-Server、Minecraft服务器、CoolQ on Docker服务器</li>
-<li>输入<code>yum install -y screen</code>即可安装Screen。【更多的Screen使用方法可以<a href="https://www.vpser.net/manage/screen.html" target="_blank" rel="noopener">点击这里</a>了解，深入研究请<a href="https://www.ibm.com/developerworks/cn/linux/l-cn-screen/index.html" target="_blank" rel="noopener">点击这里</a>】</li>
-<li>输入<code>screen -S code</code> 建立一个screen窗口（<code>code</code> 为该screen的名称，可自行选择）</li>
-<li>进入后会自动清屏</li>
-</ol>
-<h2 id="安装Code-Server"><a href="#安装Code-Server" class="headerlink" title="安装Code-Server"></a>安装Code-Server</h2><ol>
-<li><p>如果是外国的服务器可以直接从GitHub进行镜像的发行版下载——请进入<a href="https://github.com/cdr/code-server/releases" target="_blank" rel="noopener">Code-Server发行版页面</a>，将最新版本的发行版的Linux x86_64版本的链接复制，然后在终端中输入<code>wget 复制的链接</code>。</p>
-<p>如果你的服务器和笔者一样位于国内，访问github较慢，则建议将发行版压缩包下载到自己电脑（通过科学上网方式）后通过<a href="https://winscp.net/eng/download.php" target="_blank" rel="noopener">WinSCP</a>传输到服务器上。【传输时选择SFTP模式，ip即服务器ip，端口选择默认的22，用户名和密码和登陆时相同，进入后即可像复制粘贴文件一样进行传输了】</p>
-</li>
-<li><p>笔者选择的是[2.1698-vsc1.41.1]版本，对应的发行版本文件为<a href="https://github.com/cdr/code-server/releases/download/2.1698/code-server2.1698-vsc1.41.1-linux-x86_64.tar.gz" target="_blank" rel="noopener">code-server2.1698-vsc1.41.1-linux-x86_64.tar.gz</a>。笔者装完了之后一天他就出了3.0版本emmmm</p>
-</li>
-<li><p>上传到的位置可以随便选择，笔者放到了/root位置便于操作</p>
-</li>
-<li><p>上传/下载完毕后，在终端中输入<code>tar -xzvf 你刚才下载的文件的全名</code>回车就会解压出来一个文件夹了</p>
-</li>
-<li><p>输入<code>ls</code> 回车查看你刚才解压出来的那个文件夹（不带扩展名的那个就是）</p>
-</li>
-<li><p>进入刚才解压的文件夹【输入<code>cd 你刚才解压出来的文件夹的名字</code> 回车即可进入那个文件夹（Tips：可以输入前面几个字母然后按Tab就能自动补全）】</p>
-</li>
-<li><p>进入，输入命令<code>./code-server</code>回车就能启动啦~</p>
-</li>
-<li><p>注意，启动后默认端口是8080，请在阿里云安全组配置处<a href="https://help.aliyun.com/document_detail/25471.html" target="_blank" rel="noopener">设置该端口可入</a></p>
-</li>
-<li><p>接下来，在浏览器输入 <code>服务器ip:8080</code> 即可进入</p>
-</li>
-<li><p>对了，需要提供密码</p>
-<p>​    <img src="https://i.loli.net/2020/03/07/7piPKZb21QqHmCn.jpg" alt="QQ截图20200307004754.jpg"></p>
-</li>
-<li><p>密码在启动时已经显示（显示于<code>Password: xxxxxxxxx</code>这里），复制粘贴进入即可，这个密码是<strong>每次启动更换</strong>，也就是说如果你一直运行就不会更换密码</p>
-</li>
-</ol>
-<h2 id="进行Python-pip环境的配置"><a href="#进行Python-pip环境的配置" class="headerlink" title="进行Python+pip环境的配置"></a>进行Python+pip环境的配置</h2><ol>
-<li><p>首先要安装Python 3（Centos自带的是Python 2.7），通过 <strong>按住Ctrl情况下连续按下A和D</strong> 退出当前的screen</p>
-</li>
-<li><p>然后和上面差不多新建一个screen（名字别和上面相同）</p>
-</li>
-<li><p>进入后，通过<code>yum install epel-release</code>命令安装Epel仓库</p>
-</li>
-<li><p>然后通过<code>yum install python36</code>命令安装Python3.6【也可以使用更新的版本，不过比较新的可能不在Epel仓库里，建议从最新版，比如笔者当时是38，就从38往下试37、36……到能支持的】</p>
-</li>
-<li><pre><code class="shell">curl -O https://bootstrap.pypa.io/get-pip.py
-sudo /usr/bin/python3.6 get-pip.py
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">   然后运行上面两行安装pip（第二行的 &quot;python3.6&quot; 视你的python版本而定）</span><br><span class="line"></span><br><span class="line">6. 完成后运行&#96;python3 -V&#96;查看是否正确安装</span><br><span class="line"></span><br><span class="line">7. 在[Github发行版](https:&#x2F;&#x2F;github.com&#x2F;microsoft&#x2F;vscode-python&#x2F;releases)页面，下载VScode的python插件.vsix文件，并且传到服务器上</span><br><span class="line"></span><br><span class="line">8. 在Code-Server网页插件界面选择 **Install from VSIX...**</span><br><span class="line"></span><br><span class="line">   ![QQ截图20200307012117.jpg](https:&#x2F;&#x2F;i.loli.net&#x2F;2020&#x2F;03&#x2F;07&#x2F;AgYz8HFc3J9DIbU.jpg)</span><br><span class="line"></span><br><span class="line">9. 在右边选择你刚才下载的VSIX文件即可完成安装</span><br><span class="line"></span><br><span class="line">10. 接下来，就可以尽情的写Python，运行和调试程序了【建议建立一个文件夹专门放Python文件】</span><br><span class="line"></span><br><span class="line">## 进行C++环境的配置</span><br><span class="line"></span><br><span class="line">1. 首先在终端执行以下代码以安装gcc,g++,gdb</span><br><span class="line"></span><br><span class="line">   &#96;&#96;&#96;shell</span><br><span class="line">   yum install gcc</span><br><span class="line">   yum install gcc-c++</span><br><span class="line">   yum install gdb</span><br></pre></td></tr></table></figure>
-
-
-</code></pre>
-</li>
-</ol>
-<ol start="2">
-<li><p>同Python，其Github发行版页面请<a href="https://github.com/microsoft/vscode-cpptools/releases" target="_blank" rel="noopener">点击这里</a>，按照如Python已经介绍的方式安装插件</p>
-</li>
-<li><p>在一个位置新建文件夹存放C++文件（完全不会终端操作的可以通过WinSCP建文件夹）</p>
-</li>
-<li><p>使用Code-Server打开该文件夹（左上角的≡ → File → Open Floder…）</p>
-</li>
-<li><p>并新建文件helloworld.cpp文件,文件中内容如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> <span class="keyword">const</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt; <span class="string">"hello world"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>使用F1，打开命令选项，输入C/C++，选择C/C++:Edit configuration，生成c_cpp_properties.json配置文件，输入以下代码：</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"configurations"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"Linux"</span>,</span><br><span class="line">            <span class="attr">"includePath"</span>: [</span><br><span class="line">                <span class="string">"/usr/include/**"</span>, <span class="comment">//引用原生库，不加的话会不能#include &lt;iostream&gt;</span></span><br><span class="line">                <span class="string">"$&#123;workspaceFolder&#125;/**"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"defines"</span>: [],</span><br><span class="line">            <span class="attr">"compilerPath"</span>: <span class="string">"/usr/bin/gcc"</span>,</span><br><span class="line">            <span class="attr">"cStandard"</span>: <span class="string">"c11"</span>,</span><br><span class="line">            <span class="attr">"cppStandard"</span>: <span class="string">"c++17"</span>,</span><br><span class="line">            <span class="attr">"intelliSenseMode"</span>: <span class="string">"clang-x64"</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"version"</span>: <span class="number">4</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>继续在该刚才生成的 <em>.vscode</em> 文件夹里建立 <em>tasks.json</em> 文件，输入以下代码：</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"version"</span>: <span class="string">"2.0.0"</span>,</span><br><span class="line">    <span class="attr">"tasks"</span>: [&#123;</span><br><span class="line">            <span class="attr">"label"</span>: <span class="string">"compile"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"g++"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-g"</span>,</span><br><span class="line">                <span class="string">"$&#123;file&#125;"</span>,</span><br><span class="line">                <span class="string">"-o"</span>,</span><br><span class="line">                <span class="string">"$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"problemMatcher"</span>: &#123;</span><br><span class="line">                <span class="attr">"owner"</span>: <span class="string">"cpp"</span>,</span><br><span class="line">                <span class="attr">"fileLocation"</span>: [</span><br><span class="line">                    <span class="string">"relative"</span>,</span><br><span class="line">                    <span class="string">"$&#123;workspaceRoot&#125;"</span></span><br><span class="line">                ],</span><br><span class="line">                <span class="attr">"pattern"</span>: &#123;</span><br><span class="line">                    <span class="attr">"regexp"</span>: <span class="string">"^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$"</span>,</span><br><span class="line">                    <span class="attr">"file"</span>: <span class="number">1</span>,</span><br><span class="line">                    <span class="attr">"line"</span>: <span class="number">2</span>,</span><br><span class="line">                    <span class="attr">"column"</span>: <span class="number">3</span>,</span><br><span class="line">                    <span class="attr">"severity"</span>: <span class="number">4</span>,</span><br><span class="line">                    <span class="attr">"message"</span>: <span class="number">5</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">"group"</span>: &#123;</span><br><span class="line">                <span class="attr">"kind"</span>: <span class="string">"build"</span>,</span><br><span class="line">                <span class="attr">"isDefault"</span>: <span class="literal">true</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>继续在 <em>.vscode</em> 文件夹里建立 <em>launch.json</em> 文件，输入以下代码：</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"version"</span>: <span class="string">"0.2.0"</span>,</span><br><span class="line">    <span class="attr">"configurations"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"C/C++"</span>,</span><br><span class="line">            <span class="attr">"type"</span>: <span class="string">"cppdbg"</span>,</span><br><span class="line">            <span class="attr">"request"</span>: <span class="string">"launch"</span>,</span><br><span class="line">            <span class="attr">"program"</span>: <span class="string">"$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [],</span><br><span class="line">            <span class="attr">"stopAtEntry"</span>: <span class="literal">false</span>,</span><br><span class="line">            <span class="attr">"cwd"</span>: <span class="string">"$&#123;workspaceFolder&#125;"</span>,</span><br><span class="line">            <span class="attr">"environment"</span>: [],</span><br><span class="line">            <span class="attr">"externalConsole"</span>: <span class="literal">false</span>,</span><br><span class="line">            <span class="attr">"MIMode"</span>: <span class="string">"gdb"</span>,</span><br><span class="line">            <span class="attr">"preLaunchTask"</span>: <span class="string">"compile"</span>,</span><br><span class="line">            <span class="attr">"setupCommands"</span>: [</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="attr">"description"</span>: <span class="string">"Enable pretty-printing for gdb"</span>,</span><br><span class="line">                    <span class="attr">"text"</span>: <span class="string">"-enable-pretty-printing"</span>,</span><br><span class="line">                    <span class="attr">"ignoreFailures"</span>: <span class="literal">true</span></span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>大功告成！接下来你可以在这个新建立的文件夹里写C++代码文件了（不是 <em>.vsocode</em> 文件夹)，使用方式同本地的VSCODE【不要让cpp文件的文件名中含有中文】</p>
-</li>
-</ol>
-<h2 id="可选：安装Code-Runner"><a href="#可选：安装Code-Runner" class="headerlink" title="*可选：安装Code-Runner"></a>*可选：安装Code-Runner</h2><ol>
-<li>在VSCODE插件市场找到<a href="https://marketplace.visualstudio.com/items?itemName=formulahendry.code-runner" target="_blank" rel="noopener">Code-Runner</a>，点击右边Resources里面的 <em>Download Extension</em> 下载插件</li>
-<li>安装即可</li>
-<li>如何调至终端中运行请参考<a href="http://gerfind.club/VSCode-Settings/#%E5%90%88%E7%90%86%E4%BD%BF%E7%94%A8-Code-Runner" target="_blank" rel="noopener">这篇博文</a></li>
-</ol>
-<h2 id="可选：安装其他插件"><a href="#可选：安装其他插件" class="headerlink" title="*可选：安装其他插件"></a>*可选：安装其他插件</h2><ol>
-<li>和上面一样，使用VSIX文件安装即可</li>
-<li>请注意插件版本的兼容性</li>
-<li>语言包插件可能暂不支持</li>
-</ol>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/Code-Server/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
